@@ -4,7 +4,8 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
@@ -14,27 +15,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract Android project
+      - name: Extract updated Android project
         run: |
-          unzip -q ImmersiveRouletteAI_Source_FIXED.zip -d source
+          unzip -q ImmersiveRouletteAI_OCR_HISTORY_FIXED.zip -d source
 
-      - name: Install Gradle
+      - name: Install Gradle 8.9
         run: |
           wget https://services.gradle.org/distributions/gradle-8.9-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
 
-      - name: Build APK
+      - name: Build Debug APK
         run: |
           /tmp/gradle-8.9/bin/gradle -p source --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ImmersiveRouletteAI-APK
+          name: ImmersiveRouletteAI-OCR-FIXED-APK
           path: source/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
