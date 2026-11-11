@@ -4,8 +4,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
@@ -21,22 +20,37 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract updated Android project
+      - name: Find and extract project ZIP
         run: |
-          unzip -q ImmersiveRouletteAI_OCR_HISTORY_FIXED.zip -d source
+          ZIP_FILE=$(find . -type f -iname '*.zip' -not -path './.git/*' -print -quit)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: No ZIP file found in repository"
+            exit 1
+          fi
+
+          echo "Using ZIP: $ZIP_FILE"
+          mkdir -p source
+          unzip -q "$ZIP_FILE" -d source
+
+          if [ ! -f source/settings.gradle ] && [ ! -f source/settings.gradle.kts ]; then
+            echo "ERROR: settings.gradle not found at source root"
+            find source -maxdepth 4 -type f | head -100
+            exit 1
+          fi
 
       - name: Install Gradle 8.9
         run: |
           wget https://services.gradle.org/distributions/gradle-8.9-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /tmp
 
-      - name: Build Debug APK
+      - name: Build APK
         run: |
           /tmp/gradle-8.9/bin/gradle -p source --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ImmersiveRouletteAI-OCR-FIXED-APK
+          name: ImmersiveRouletteAI-NEW-APK
           path: source/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
